@@ -14,6 +14,9 @@ from utils.common_functions import read_yaml,load_data
 
 from scipy.stats import randint
 
+import mlflow
+import mlflow.sklearn
+
 logger = get_logger("__name__")
 
 class ModelTraining:
@@ -119,21 +122,38 @@ class ModelTraining:
 
     def run(self):
         try:
-            logger.info("Starting the Model Training Step")
-            X_train, y_train, X_test, y_test = self.load_and_split_data()
+            with mlflow.start_run():
+                logger.info("Starting the Model Training Step")
 
-            best_lgbm_model = self.trainlgbm(X_train,y_train)
+                logger.info("Starting our mlflow experimentation")
 
-            metrics = self.evaluatemodel(best_lgbm_model,X_test,y_test)
+                logger.info("Logging the training and testing dataset to MLFLOW")
 
-            self.save_model(best_lgbm_model)
+                mlflow.log_artifact(self.train_path,artifact_path="datasets")
 
-            logger.info("Model training Successfully completed!")
+                mlflow.log_artifact(self.test_path, artifact_path="datasets")
+
+                X_train, y_train, X_test, y_test = self.load_and_split_data()
+
+                best_lgbm_model = self.trainlgbm(X_train,y_train)
+
+                metrics = self.evaluatemodel(best_lgbm_model,X_test,y_test)
+
+                self.save_model(best_lgbm_model)
+                
+                logger.info("Logging the model info MLFLOW")
+                mlflow.log_artifact(self.model_output_path)
+
+                logger.info("Logging params and metrics into MLFLOW!")
+                mlflow.log_params(best_lgbm_model.get_params())
+                mlflow.log_metrics(metrics)
+
+                logger.info("Model training Successfully completed!")
         
         except Exception as e:
             logger.info("Error while training the model")
             raise CustomException("Failed to train the model", e)
 
 if __name__=="__main__":
-    obj = ModelTraining(PROCESSED_TRAIN_DATA_PATH,PROCESSED_TRAIN_DATA_PATH,MODEL_OUTPUT_PATH)
+    obj = ModelTraining(PROCESSED_TRAIN_DATA_PATH,PROCESSED_TEST_DATA_PATH,MODEL_OUTPUT_PATH)
     obj.run()

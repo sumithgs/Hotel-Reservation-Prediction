@@ -21,7 +21,7 @@ class DataIngestion:
 
     def download_csv_from_gcp(self):
         try:
-            client = storage.Client()
+            client = storage.Client(project="striped-torus-479904-v4")
             bucket = client.bucket(self.bucket_name)
             blob = bucket.blob(self.file_name)
 

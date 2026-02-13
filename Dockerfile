@@ -20,4 +20,8 @@ RUN pip install --no-cache-dir -e .
 
 # CMD ["python","application.py"]
 
-CMD ["bash"]
+ENV PORT=8080
+EXPOSE 8080
+
+# Run Flask app
+CMD ["python", "application.py"]

@@ -20,7 +20,7 @@ import mlflow.sklearn
 os.makedirs(MLFLOW_ARTIFACTS_DIR, exist_ok=True)
 
 # Use local file-based tracking URI
-mlflow.set_tracking_uri(f"file://{os.path.abspath(MLFLOW_ARTIFACTS_DIR)}")
+mlflow.set_tracking_uri("sqlite:///artifacts/mlflow/mlflow.db")
 
 # Create or get experiment
 experiment_name = "Hotel_Reservation_Experiment"

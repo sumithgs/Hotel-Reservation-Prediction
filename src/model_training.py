@@ -125,15 +125,20 @@ class ModelTraining:
             # Ensure MLflow artifact directory exists
             os.makedirs(MLFLOW_ARTIFACTS_DIR, exist_ok=True)
 
-            # Set MLflow tracking URI to a safe workspace path
+            # Use local file-based tracking URI
             mlflow.set_tracking_uri(f"file://{os.path.abspath(MLFLOW_ARTIFACTS_DIR)}")
+
+            # Create or get experiment
+            experiment_name = "Hotel_Reservation_Experiment"
+            exp = mlflow.get_experiment_by_name(experiment_name)
+            if exp is None:
+                mlflow.create_experiment(experiment_name)
+            mlflow.set_experiment(experiment_name)
 
             with mlflow.start_run():
                 logger.info("Starting the Model Training Step")
-                logger.info("Starting our MLflow experimentation")
 
-                # Log datasets safely
-                logger.info("Logging the training and testing dataset to MLflow")
+                # Log datasets
                 os.makedirs(os.path.join(MLFLOW_ARTIFACTS_DIR, "datasets"), exist_ok=True)
                 mlflow.log_artifact(self.train_path, artifact_path="datasets")
                 mlflow.log_artifact(self.test_path, artifact_path="datasets")
@@ -150,12 +155,10 @@ class ModelTraining:
                 # Save model
                 self.save_model(best_lgbm_model)
 
-                # Log the model artifact
-                logger.info("Logging the model to MLflow")
+                # Log model artifact
                 mlflow.log_artifact(self.model_output_path, artifact_path="models")
 
-                # Log parameters and metrics
-                logger.info("Logging params and metrics into MLflow!")
+                # Log params and metrics
                 mlflow.log_params(best_lgbm_model.get_params())
                 mlflow.log_metrics(metrics)
 
@@ -164,6 +167,7 @@ class ModelTraining:
         except Exception as e:
             logger.error("Error while training the model", exc_info=True)
             raise CustomException("Failed to train the model", e)
+
 
 
 if __name__=="__main__":

@@ -122,37 +122,49 @@ class ModelTraining:
 
     def run(self):
         try:
+            # Ensure MLflow artifact directory exists
+            os.makedirs(MLFLOW_ARTIFACTS_DIR, exist_ok=True)
+
+            # Set MLflow tracking URI to a safe workspace path
+            mlflow.set_tracking_uri(f"file://{os.path.abspath(MLFLOW_ARTIFACTS_DIR)}")
+
             with mlflow.start_run():
                 logger.info("Starting the Model Training Step")
+                logger.info("Starting our MLflow experimentation")
 
-                logger.info("Starting our mlflow experimentation")
-
-                logger.info("Logging the training and testing dataset to MLFLOW")
-
-                mlflow.log_artifact(self.train_path,artifact_path="datasets")
-
+                # Log datasets safely
+                logger.info("Logging the training and testing dataset to MLflow")
+                os.makedirs(os.path.join(MLFLOW_ARTIFACTS_DIR, "datasets"), exist_ok=True)
+                mlflow.log_artifact(self.train_path, artifact_path="datasets")
                 mlflow.log_artifact(self.test_path, artifact_path="datasets")
 
+                # Load data
                 X_train, y_train, X_test, y_test = self.load_and_split_data()
 
-                best_lgbm_model = self.trainlgbm(X_train,y_train)
+                # Train model
+                best_lgbm_model = self.trainlgbm(X_train, y_train)
 
-                metrics = self.evaluatemodel(best_lgbm_model,X_test,y_test)
+                # Evaluate model
+                metrics = self.evaluatemodel(best_lgbm_model, X_test, y_test)
 
+                # Save model
                 self.save_model(best_lgbm_model)
-                
-                logger.info("Logging the model info MLFLOW")
-                mlflow.log_artifact(self.model_output_path)
 
-                logger.info("Logging params and metrics into MLFLOW!")
+                # Log the model artifact
+                logger.info("Logging the model to MLflow")
+                mlflow.log_artifact(self.model_output_path, artifact_path="models")
+
+                # Log parameters and metrics
+                logger.info("Logging params and metrics into MLflow!")
                 mlflow.log_params(best_lgbm_model.get_params())
                 mlflow.log_metrics(metrics)
 
-                logger.info("Model training Successfully completed!")
-        
+                logger.info("Model training successfully completed!")
+
         except Exception as e:
-            logger.info("Error while training the model")
+            logger.error("Error while training the model", exc_info=True)
             raise CustomException("Failed to train the model", e)
+
 
 if __name__=="__main__":
     obj = ModelTraining(PROCESSED_TRAIN_DATA_PATH,PROCESSED_TEST_DATA_PATH,MODEL_OUTPUT_PATH)

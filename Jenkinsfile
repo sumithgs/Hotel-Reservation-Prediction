@@ -27,6 +27,23 @@ pipeline{
                 }
             }
         }
+        stage('Run Training Pipeline') {
+            steps {
+                withCredentials([file(credentialsId: 'gcp-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    script {
+                        echo 'Running Training Pipeline (Data Ingestion + Processing + Training)...'
+                        sh '''
+                        export GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
+
+                        . ${VENV_DIR}/bin/activate
+
+                        python pipeline/training_pipeline.py
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Building and Pushing Docker Image to GCR'){
             steps{
                 withCredentials([file(credentialsId: 'gcp-key' , variable : 'GOOGLE_APPLICATION_CREDENTIALS')]){

@@ -11,7 +11,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . .
+COPY gcp_key.json /app/gcp_key.json
 
+ENV GOOGLE_APPLICATION_CREDENTIALS="/app/gcp_key.json"
 RUN pip install --no-cache-dir -e .
 
 RUN python pipeline/training_pipeline.py

@@ -16,7 +16,15 @@ from scipy.stats import randint
 
 import mlflow
 import mlflow.sklearn
+# Ensure MLflow artifact directory exists
+os.makedirs(MLFLOW_ARTIFACTS_DIR, exist_ok=True)
 
+# Use local file-based tracking URI
+mlflow.set_tracking_uri(f"file://{os.path.abspath(MLFLOW_ARTIFACTS_DIR)}")
+
+# Create or get experiment
+experiment_name = "Hotel_Reservation_Experiment"
+mlflow.set_experiment(experiment_name)
 logger = get_logger("__name__")
 
 class ModelTraining:
@@ -122,14 +130,7 @@ class ModelTraining:
 
     def run(self):
         try:
-            # Ensure MLflow artifact directory exists
-            os.makedirs(MLFLOW_ARTIFACTS_DIR, exist_ok=True)
-
-            # Use local file-based tracking URI
-            mlflow.set_tracking_uri(f"file://{os.path.abspath(MLFLOW_ARTIFACTS_DIR)}")
-
-            # Create or get experiment
-            experiment_name = "Hotel_Reservation_Experiment"
+            
             exp = mlflow.get_experiment_by_name(experiment_name)
             if exp is None:
                 mlflow.create_experiment(experiment_name)
